@@ -7,40 +7,28 @@ public class Write implements Comparable<Write> {
 
     public static final Comparator<Write> COMMITTED_TIMESTAMP_ORDER = new ByCommittedTimestampOrder();
 
-    private final long commitTimestamp;
-    private final long acceptingServerTimestamp;
-    private final ServerId acceptingServerId;
+    private final WriteStamp writeStamp;
     private final String payload;
 
-    private Write(long commitTimestamp, long acceptingServerTimestamp, ServerId acceptingServerId, String payload) {
-        this.commitTimestamp = commitTimestamp;
-        this.acceptingServerTimestamp = acceptingServerTimestamp;
-        this.acceptingServerId = acceptingServerId;
+    private Write(long acceptingServerTimestamp, ServerId acceptingServerId, String payload, long commitTimestamp) {
+        this.writeStamp = new WriteStamp(acceptingServerTimestamp, acceptingServerId, commitTimestamp);
         this.payload = payload;
     }
 
     public static Write newTentativeWrite(long acceptingServerTimestamp, ServerId acceptingServerId, String payload) {
-        return new Write(Long.MIN_VALUE, acceptingServerTimestamp, acceptingServerId, payload);
+        return new Write(acceptingServerTimestamp, acceptingServerId, payload, Long.MAX_VALUE);
     }
 
-    public static Write newCommittedWrite(long commitTimestamp, long acceptingServerTimestamp, ServerId acceptingServerId, String payload) {
-        return new Write(commitTimestamp, acceptingServerTimestamp, acceptingServerId, payload);
+    public static Write newCommittedWrite(long acceptingServerTimestamp, ServerId acceptingServerId, String payload, long commitTimestamp) {
+        return new Write(acceptingServerTimestamp, acceptingServerId, payload, commitTimestamp);
     }
 
     public static Write newCreationWrite(long acceptingServerTimestamp, ServerId acceptingServerId) {
         return Write.newTentativeWrite(acceptingServerTimestamp, acceptingServerId, "CREATE");
     }
 
-    public long commitTimestamp() {
-        return commitTimestamp;
-    }
-
-    public long acceptingServerTimestamp() {
-        return acceptingServerTimestamp;
-    }
-
-    public ServerId acceptingServerId() {
-        return acceptingServerId;
+    public WriteStamp writeStamp() {
+        return writeStamp;
     }
 
     public String payload() {
@@ -52,33 +40,19 @@ public class Write implements Comparable<Write> {
     }
 
     public boolean isCommitted() {
-        return commitTimestamp > 0;
+        return writeStamp.commitTimestamp() > 0;
     }
 
     @Override
     public String toString() {
-        return payload +
-                " [committed at: " + commitTimestamp +
-                ", accepted at: " + acceptingServerTimestamp +
-                " accepted by: " + acceptingServerId + "]";
+        return payload + " [" + writeStamp + "]";
     }
 
     public int compareTo(Write that) {
-        if (this.commitTimestamp < that.commitTimestamp()) {
+        if (this.writeStamp.compareTo(that.writeStamp()) < 0) {
             return -1;
-        } else if (this.commitTimestamp == that.commitTimestamp()) {
-            if ((this.acceptingServerId == null && that.acceptingServerId() == null) ||
-                (this.acceptingServerId != null && this.acceptingServerId.equals(that.acceptingServerId()))) {
-                if (this.acceptingServerTimestamp < that.acceptingServerTimestamp()) {
-                    return -1;
-                } else if (this.acceptingServerTimestamp == that.acceptingServerTimestamp()) {
-                    return this.payload.compareTo(that.payload());
-                } else {
-                    return 1;
-                }
-            } else {
-                return 0;
-            }
+        } else if (this.writeStamp == that.writeStamp()) {
+            return this.payload.compareTo(that.payload());
         } else {
             return 1;
         }

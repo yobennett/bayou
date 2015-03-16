@@ -7,14 +7,15 @@ import java.util.TreeSet;
 public class Server {
 
     private final ServerId id;
-    private final long timestamp;
+
+    private long logicalClock;
     private Set<Write> writeLog;
 
     // TODO mutable list of known servers; initialize with self
 
     public Server() {
         this.id = null;
-        this.timestamp = 0;
+        this.logicalClock = 0;
         this.writeLog = new TreeSet<Write>(Write.COMMITTED_TIMESTAMP_ORDER);
         create();
     }
@@ -23,12 +24,12 @@ public class Server {
         return id;
     }
 
-    public long timestamp() {
-        return timestamp;
+    public long logicalClock() {
+        return logicalClock;
     }
 
     public void create() {
-        Write creationWrite = Write.newCreationWrite(timestamp, id);
+        Write creationWrite = Write.newCreationWrite(logicalClock, id);
         writeLog.add(creationWrite);
 
         System.out.println("write log:\n" + writeLog);
