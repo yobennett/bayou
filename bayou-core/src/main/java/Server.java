@@ -25,11 +25,15 @@ public class Server {
         return logicalClock;
     }
 
+    public void appendWrite(Write write) {
+        System.out.println("Appending: " + write);
+        writeLog.append(write);
+        logicalClock += 1;
+    }
+
     public void create() {
         Write creationWrite = Write.newCreationWrite(logicalClock, id);
-        writeLog.append(creationWrite);
-
-        System.out.println("write log:\n" + writeLog);
+        appendWrite(creationWrite);
 
         // anti-entropy with a random known server (with self for primary)
     }
