@@ -5,10 +5,16 @@ public class ServerId implements Comparable<ServerId> {
 
     private final long timestamp;
     private final ServerId acceptingServerId;
+    private final String prefix;
 
-    public ServerId(long timestamp, ServerId acceptingServerId) {
+    public ServerId(long timestamp, ServerId acceptingServerId, String prefix) {
         this.timestamp = timestamp;
         this.acceptingServerId = acceptingServerId;
+        this.prefix = null;
+    }
+
+    public ServerId(long timestamp, ServerId acceptingServerId) {
+        this(timestamp, acceptingServerId, null);
     }
 
     public long timestamp() {
@@ -20,14 +26,11 @@ public class ServerId implements Comparable<ServerId> {
     }
 
     public String toString() {
-        StringBuilder sb = new StringBuilder("<");
-        sb.append(timestamp);
-        if (acceptingServerId != null) {
-            sb.append(",");
-            sb.append(acceptingServerId);
-        }
-        sb.append(">");
-        return sb.toString();
+        return "<" +
+            timestamp + "," +
+            (prefix != null ? prefix + "," : "") +
+            (acceptingServerId != null ? acceptingServerId + "," : "") +
+            ">";
     }
 
     public int compareTo(ServerId that) {
