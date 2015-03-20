@@ -21,4 +21,8 @@ out/
 # Mac
 .DS_Store
 
+# Application build artifacts
 target/
+
+# Application data
+*.db

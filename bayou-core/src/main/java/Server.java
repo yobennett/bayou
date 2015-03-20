@@ -1,5 +1,5 @@
-import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Created by bennett on 3/13/15.
@@ -12,6 +12,7 @@ public class Server {
     private long logicalClock;
     private WriteLog writeLog;
     private VersionVector versionVector; // C timestamp vector?
+    private TupleStore tupleStore;
 
     // TODO mutable list of known servers; initialize with self
 
@@ -21,11 +22,14 @@ public class Server {
         this.logicalClock = 0;
         this.writeLog = new WriteLog();
         this.versionVector = new VersionVector();
-        create();
-    }
 
-    private Server() {
-        this(false);
+        try {
+            this.tupleStore = new TupleStore();
+        } catch (ClassNotFoundException e) {
+            System.err.println("BOOM!");
+        }
+
+        create();
     }
 
     public static Server newPrimaryServer() {
@@ -52,17 +56,13 @@ public class Server {
         return primary;
     }
 
-    public void appendWrite(Write write) {
-        System.out.println("Appending: " + write);
-        writeLog.append(write);
-    }
-
     private void receiveWrites(Set<Write> writeSet, String type) {
         switch (type) {
             case "client":
                 receiveClientWrites(writeSet);
                 break;
             case "server":
+                receiveServerWrites(writeSet);
                 break;
             default:
                 break;
@@ -70,32 +70,40 @@ public class Server {
     }
 
     private void receiveClientWrites(Set<Write> writeSet) {
-        if (writeSet.size() > 0) {
-            tick();
-            Write write = writeSet.iterator().next();
-            appendWrite(write);
-            // new BayouWrite();
+        if (writeSet.isEmpty()) {
+            return;
         }
+        tick();
+        Write proposedWrite = writeSet.iterator().next();
+        Write write = Write.newTentativeWrite(logicalClock, id, proposedWrite.payload());
+        writeLog.append(write);
+        new BayouWrite(
+            write.payload(),
+            new DependencyCheck(null, null),
+            new MergeProc()
+        );
     }
 
     private void receiveServerWrites(Set<Write> writeSet) {
-        if (writeSet.size() > 0) {
-            Write write = writeSet.iterator().next();
-            // find insertion point using write.id
-            // roll back tuple store
-            // insert writeSet at insertion point
-            // loop through previous writes after insertion point
-                // new BayouWrite() per write
-            // get the last write from the writeSet
-
-            // update logical clock
-            // logicalClock = Math.max(logicalClock, write.writeStamp().acceptingServerTimestamp());
+        if (writeSet.isEmpty()) {
+            return;
         }
+        Write write = writeSet.iterator().next();
+        // find insertion point using write.id
+        // roll back tuple store
+        // insert writeSet at insertion point
+        // loop through previous writes after insertion point
+        // new BayouWrite() per write
+        // get the last write from the writeSet
+
+        // update logical clock
+        // logicalClock = Math.max(logicalClock, write.writeStamp().acceptingServerTimestamp());
     }
 
     public void create() {
-        Write creationWrite = Write.newCreationWrite(logicalClock, id);
-        appendWrite(creationWrite);
+        Set<Write> writeSet = new TreeSet<>(Write.COMMITTED_TIMESTAMP_ORDER);
+        writeSet.add(Write.newCreationWrite());
+        receiveWrites(writeSet, "client");
     }
 
     public static void main(String[] args) {

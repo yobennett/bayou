@@ -15,6 +15,10 @@ public class Write implements Comparable<Write> {
         this.payload = payload;
     }
 
+    public static Write newProposedWrite(String payload) {
+        return new Write(Long.MAX_VALUE, null, payload, Long.MAX_VALUE);
+    }
+
     public static Write newTentativeWrite(long acceptingServerTimestamp, ServerId acceptingServerId, String payload) {
         return new Write(acceptingServerTimestamp, acceptingServerId, payload, Long.MAX_VALUE);
     }
@@ -23,8 +27,8 @@ public class Write implements Comparable<Write> {
         return new Write(acceptingServerTimestamp, acceptingServerId, payload, commitTimestamp);
     }
 
-    public static Write newCreationWrite(long acceptingServerTimestamp, ServerId acceptingServerId) {
-        return Write.newTentativeWrite(acceptingServerTimestamp, acceptingServerId, "CREATE");
+    public static Write newCreationWrite() {
+        return Write.newProposedWrite("CREATE");
     }
 
     public WriteStamp writeStamp() {
