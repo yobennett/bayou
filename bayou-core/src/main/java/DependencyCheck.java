@@ -4,9 +4,9 @@
 public class DependencyCheck {
 
     private final String query;
-    private final String expectedResult;
+    private final int expectedResult;
 
-    public DependencyCheck(String query, String expectedResult) {
+    public DependencyCheck(String query, int expectedResult) {
         this.query = query;
         this.expectedResult = expectedResult;
     }
@@ -15,7 +15,7 @@ public class DependencyCheck {
         return query;
     }
 
-    public String expectedResult() {
+    public int expectedResult() {
         return expectedResult;
     }
 

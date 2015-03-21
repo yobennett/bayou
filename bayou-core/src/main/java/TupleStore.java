@@ -18,19 +18,15 @@ public class TupleStore {
 
         connection = null;
         try {
+
             // create a database connection
-            connection = DriverManager.getConnection("jdbc:sqlite::memory:");
+            connection = DriverManager.getConnection("jdbc:sqlite:bayou.db");
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
 
             // servers
             statement.executeUpdate("drop table if exists servers");
             statement.executeUpdate("create table servers (alias string)");
-
-            // writes
-            statement.executeUpdate("drop table if exists writes");
-            statement.executeUpdate("create table writes (acceptingServerTimestamp long, acceptingServerId string, payload string, commitTimestamp long)");
-
         } catch (SQLException e) {
             System.err.println(e.getMessage());
         } finally {

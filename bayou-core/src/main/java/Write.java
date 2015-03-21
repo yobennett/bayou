@@ -9,26 +9,20 @@ public class Write implements Comparable<Write> {
 
     private final WriteStamp writeStamp;
     private final String payload;
+    private final DependencyCheck dependencyCheck;
 
-    private Write(long acceptingServerTimestamp, ServerId acceptingServerId, String payload, long commitTimestamp) {
+    private Write(long acceptingServerTimestamp, ServerId acceptingServerId, String payload, long commitTimestamp, DependencyCheck dependencyCheck) {
         this.writeStamp = new WriteStamp(acceptingServerTimestamp, acceptingServerId, commitTimestamp);
         this.payload = payload;
+        this.dependencyCheck = dependencyCheck;
     }
 
-    public static Write newProposedWrite(String payload) {
-        return new Write(Long.MAX_VALUE, null, payload, Long.MAX_VALUE);
+    public static Write newProposedWrite(String payload, DependencyCheck dependencyCheck) {
+        return new Write(Long.MAX_VALUE, null, payload, Long.MAX_VALUE, dependencyCheck);
     }
 
-    public static Write newTentativeWrite(long acceptingServerTimestamp, ServerId acceptingServerId, String payload) {
-        return new Write(acceptingServerTimestamp, acceptingServerId, payload, Long.MAX_VALUE);
-    }
-
-    public static Write newCommittedWrite(long acceptingServerTimestamp, ServerId acceptingServerId, String payload, long commitTimestamp) {
-        return new Write(acceptingServerTimestamp, acceptingServerId, payload, commitTimestamp);
-    }
-
-    public static Write newCreationWrite() {
-        return Write.newProposedWrite("CREATE");
+    public static Write newTentativeWrite(long acceptingServerTimestamp, ServerId acceptingServerId, String payload, DependencyCheck dependencyCheck) {
+        return new Write(acceptingServerTimestamp, acceptingServerId, payload, Long.MAX_VALUE, dependencyCheck);
     }
 
     public WriteStamp writeStamp() {
@@ -37,6 +31,10 @@ public class Write implements Comparable<Write> {
 
     public String payload() {
         return payload;
+    }
+
+    public DependencyCheck dependencyCheck() {
+        return dependencyCheck;
     }
 
     public boolean isTentative() {

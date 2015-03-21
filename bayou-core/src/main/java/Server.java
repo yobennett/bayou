@@ -75,11 +75,11 @@ public class Server {
         }
         tick();
         Write proposedWrite = writeSet.iterator().next();
-        Write write = Write.newTentativeWrite(logicalClock, id, proposedWrite.payload());
+        Write write = Write.newTentativeWrite(logicalClock, id, proposedWrite.payload(), proposedWrite.dependencyCheck());
         writeLog.append(write);
         new BayouWrite(
             write.payload(),
-            new DependencyCheck(null, null),
+            write.dependencyCheck(),
             new MergeProc()
         );
     }
@@ -102,8 +102,15 @@ public class Server {
 
     public void create() {
         Set<Write> writeSet = new TreeSet<>(Write.COMMITTED_TIMESTAMP_ORDER);
-        writeSet.add(Write.newCreationWrite());
+        writeSet.add(newCreationWrite("foo"));
         receiveWrites(writeSet, "client");
+    }
+
+    public static Write newCreationWrite(String alias) {
+        String update = String.format("insert into servers values('%s')", alias);
+        String dependencyCheckQuery = String.format("select count(*) from servers where alias=\"%s\"", alias);
+        DependencyCheck dependencyCheck = new DependencyCheck(dependencyCheckQuery, 0);
+        return Write.newProposedWrite(update, dependencyCheck);
     }
 
     public static void main(String[] args) {

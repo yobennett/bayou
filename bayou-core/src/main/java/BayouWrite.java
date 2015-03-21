@@ -49,27 +49,49 @@ Bayou_Write (update, dependency_check, mergeproc) {
     private void run() {
         System.out.println("BayouWrite run: " + update);
 
+        // TODO run `update` in sqlite
+        // i.e. statement.executeUpdate("???update???");
+
         if (update == null) {
             return;
         }
 
-        /*
         // run query
         // compare to expected result
         // interpret mergeproc if they don't match
         // apply resolved update
 
+        connection = null;
         try {
+            // create a database connection
+            connection = DriverManager.getConnection("jdbc:sqlite:bayou.db");
+
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
             ResultSet rs = statement.executeQuery(dependencyCheck.query());
-            while(rs.next()) {
-                // check results of query
+            while (rs.next()) {
+                int rsSize = rs.getInt("count(*)");
+
+                if (rsSize == dependencyCheck.expectedResult()) {
+                    System.out.println("RUN " + update);
+                    statement.executeUpdate(update);
+                } else {
+                    System.err.println("RUN MERGEPROC");
+                }
+
             }
+
         } catch (SQLException e) {
             System.err.println(e.getMessage());
+        } finally {
+            try {
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
         }
-        */
 
     }
 
